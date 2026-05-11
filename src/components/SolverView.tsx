@@ -11,6 +11,8 @@ import { IterationTable } from "./IterationTable";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { ChevronLeft, ChevronRight, Calculator, RefreshCcw } from "lucide-react";
 
+const BLOCKED_ROUTE_THRESHOLD = -500000;
+
 export function SolverView() {
   const [activeTab, setActiveTab] = useState("input");
   const { 
@@ -32,6 +34,25 @@ export function SolverView() {
   };
 
   const currentIteration = iterations[currentIterationIndex];
+  const totals = currentIteration
+    ? currentIteration.matrix.reduce(
+        (acc, row, i) => {
+          row.forEach((cell, j) => {
+            if (cell.amount <= 0) return;
+            const isSupplierDummy = i >= suppliers.length;
+            const isConsumerDummy = j >= consumers.length;
+            const isBlocked = cell.unitProfit <= BLOCKED_ROUTE_THRESHOLD;
+            if (isSupplierDummy || isConsumerDummy || isBlocked) return;
+
+            acc.transportCost += cell.amount * (transportCosts[i]?.[j] ?? 0);
+            acc.purchaseCost += cell.amount * suppliers[i].purchasePrice;
+            acc.totalSales += cell.amount * consumers[j].sellPrice;
+          });
+          return acc;
+        },
+        { transportCost: 0, purchaseCost: 0, totalSales: 0 }
+      )
+    : { transportCost: 0, purchaseCost: 0, totalSales: 0 };
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -61,6 +82,20 @@ export function SolverView() {
                 <p className="text-muted-foreground">
                   Zysk całkowity: <span className="font-bold text-primary">{currentIteration.totalProfit}</span>
                 </p>
+                <div className="text-sm text-muted-foreground space-y-1 mt-1">
+                  <p>
+                    Koszt transportu:{" "}
+                    <span className="font-semibold text-foreground">{totals.transportCost.toLocaleString()}</span>
+                  </p>
+                  <p>
+                    Koszt zakupu:{" "}
+                    <span className="font-semibold text-foreground">{totals.purchaseCost.toLocaleString()}</span>
+                  </p>
+                  <p>
+                    Całkowita cena sprzedaży:{" "}
+                    <span className="font-semibold text-foreground">{totals.totalSales.toLocaleString()}</span>
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <Button 
