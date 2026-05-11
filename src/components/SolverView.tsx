@@ -11,6 +11,8 @@ import { IterationTable } from "./IterationTable";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { ChevronLeft, ChevronRight, Calculator, RefreshCcw } from "lucide-react";
 
+const BLOCKED_ROUTE_THRESHOLD = -500000;
+
 export function SolverView() {
   const [activeTab, setActiveTab] = useState("input");
   const { 
@@ -39,7 +41,7 @@ export function SolverView() {
             if (cell.amount <= 0) return;
             const isSupplierDummy = i >= suppliers.length;
             const isConsumerDummy = j >= consumers.length;
-            const isBlocked = cell.unitProfit <= -500000;
+            const isBlocked = cell.unitProfit <= BLOCKED_ROUTE_THRESHOLD;
             if (isSupplierDummy || isConsumerDummy || isBlocked) return;
 
             acc.transportCost += cell.amount * (transportCosts[i]?.[j] ?? 0);
